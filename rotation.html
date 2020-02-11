@@ -13,6 +13,8 @@
 <script type="module">
 
 var context = canvas.getContext("2d");
+
+// Draw an image on the canvas, to rotate
 const randI = (min, max = min + (min = 0)) => (Math.random() * (max - min) + min) | 0;
 const doFor = (count, cb) => { var i = 0; while (i < count && cb(i++) !== true); }; 
 
@@ -26,30 +28,53 @@ context.fillStyle = "black";
 context.strokeStyle = "white";
 context.lineWidth = "5";
 context.lineJoin = "round";
-context.strokeText("Rotate",128,128);
-context.fillText("Rotate",128,128);
+context.strokeText("Rotate",canvas.width/2,canvas.height/2);
+context.fillText("Rotate",canvas.width/2,canvas.height/2);
 
 // get the source pixel data
 var imageData = context.getImageData(0,0,canvas.width,canvas.height);
 
-// rotation angle, in radians
-const radians = 0.523599;
+// Calculate total absolute difference of source image
+var imageDataSum = 0;
+for (var a = 0; a < imageData.width; ++a){
+    for (var b = 0; b < imageData.height; ++b){
+        imageDataSum += imageData.data[b+a*imageData.width];
+    }
+}
+var imageDataAbs = Math.abs(imageDataSum);
 
-// measure performance speed of rotate function
+// rotation angle, in radians
+const radians = 0.52;
+
+// measure speed of rotate function
 performance.mark('starting_rotation');
 
 // call the function to the rotate the image by the specified amount
 var rotateImage = new Rotator();
-var imageDataResult = rotateImage.rotate(imageData,radians);
+try{
+    imageData = rotateImage.rotate(imageData,radians);
+}catch(e) {
+    alert(e.message);
+}
 
 performance.mark('ending_rotation');
 + performance.measure("rotation_measure", "starting_rotation", "ending_rotation");
 
-// log speed
+// log speed, for performance tracking
 const measures = performance.getEntriesByType('measure');
     measures.forEach(measureItem => {
       console.log(`${measureItem.name}: ${measureItem.duration}`);
     });
+
+// Calculate total absolute difference of rotated image
+var imageDataResultSum = 0;
+for (var c = 0; c < imageData.width; ++c){
+    for (var d = 0; d < imageData.height; ++d){
+        imageDataResultSum += imageData.data[d+c*imageData.width];
+    }
+}
+var imageDataResultAbs = Math.abs(imageDataResultSum);
+console.log("Total Absolute Difference: " + (imageDataResultAbs - imageDataAbs));
 
 // create a second canvas
 var c1 = document.createElement("canvas");
@@ -57,13 +82,22 @@ c1.width = canvas.width;
 c1.height = canvas.height;
 var context1 = c1.getContext("2d"); 
 // and put the rotated image on the new canvas
-context1.putImageData(imageDataResult, 0, 0);
+context1.putImageData(imageData, 0, 0);
 // add the canvas to the page
 document.body.appendChild(c1);
 
 export function Rotator() {
             
     this.rotate = function(imageData,radians){
+
+        if(imageData === null){
+            throw new Error("Please provide an imageData object");
+        }
+
+        // throw error if angle entered is out of range
+        if(radians < -6.28 || radians > 6.28) {
+            throw new Error("Please enter an acceptable radian value for rotation");
+        }
 
         // general iterators
         var i, j;
@@ -78,15 +112,12 @@ export function Rotator() {
 
         // create a source pixel array
         var srcImageData = new Uint32Array(imageData.data.buffer);
-        // create a destination pixel array
+        // create a destination pixel array (divide by 4 for rgba)
         var destImageData = new Uint32Array(imageData.data.length/4);
         
-        // Rotate the bitmap around the center
+        // Rotate the image around the center
         var iCentreX = iWidth / 2;
         var iCentreY = iHeight / 2;
-        
-        // Angle to rotate by
-        var cnAngle = radians;
         
         // Calculate diagonal with extra buffer space
         var cnSizeBuffer = 20;
@@ -103,7 +134,7 @@ export function Rotator() {
         for (i = 0; i < iDiagonal; ++i){
             for (j = 0; j < iDiagonal; ++j){
 
-                // convert raster to Cartesian
+                // convert matrix coordinates to Cartesian
                 x = j - iCentreX;
                 y = iCentreY - i;
 
@@ -111,42 +142,43 @@ export function Rotator() {
                 fDistance = Math.sqrt(x * x + y * y);
                 fPolarAngle = 0.0;
 
-            if (x === 0) {
-                if (y === 0) {
+                if (x === 0) {
+                    if (y === 0) {
 
-                    // centre of image, no rotation needed
-                    destImageData[j+i*iWidth] = srcImageData[j+i*iWidth];
-                    continue;
+                        // centre of image, no rotation needed
+                        destImageData[j+i*iWidth] = srcImageData[j+i*iWidth];
+                        continue;
                 
-                }else if (y < 0){
-                    fPolarAngle = 1.5 * Math.PI;
+                    }else if (y < 0){
+                        fPolarAngle = 1.5 * Math.PI;
+                    }else{
+                        fPolarAngle = 0.5 * Math.PI;
+                    }
                 }else{
-                    fPolarAngle = 0.5 * Math.PI;
+                    fPolarAngle = Math.atan2(parseFloat(y),parseFloat(x));
                 }
-            }else{
-                fPolarAngle = Math.atan2(parseFloat(y),parseFloat(x));
-            }
 
-            // Add the rotation
-            fPolarAngle += cnAngle;
+                // Add the rotation
+                fPolarAngle += radians;
 
-            // convert polar to Cartesian
-            x = Math.floor((Math.round(fDistance * Math.cos(fPolarAngle))));
-            y = Math.floor((Math.round(fDistance * Math.sin(fPolarAngle))));
+                // convert polar to Cartesian
+                x = Math.floor((Math.round(fDistance * Math.cos(fPolarAngle))));
+                y = Math.floor((Math.round(fDistance * Math.sin(fPolarAngle))));
 
-            // convert Cartesian to raster
-            x = x + iCentreX;
-            y = iCentreY - y;
+                // convert Cartesian to matrix
+                x = x + iCentreX;
+                y = iCentreY - y;
 
-            // check bounds
-            if (x < 0 || x >= iWidth || y < 0 || y >= iHeight) continue;
+                // check bounds
+                if (x < 0 || x >= iWidth || y < 0 || y >= iHeight) continue;
 
-            destImageData[j + i * iWidth] = srcImageData[x + y * iWidth];
+                destImageData[j + i * iWidth] = srcImageData[x + y * iWidth];
             }
         }
 
-    srcImageData.set(destImageData);
-    return imageData;
+        // set the destination image coordinates against source
+        srcImageData.set(destImageData);
+        return imageData;
     }
 };
 
