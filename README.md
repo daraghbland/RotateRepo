@@ -14,10 +14,12 @@ Linear interpolation was used to calculate the new rotation points.
 
 Future improvements which I would have liked to have made to the program are listed below:
 
-1. Improve image quality
+# 1. Improve image quality
+
 I applied linear interpolation to calculate the image rotation, however for smoother image quality I believe that bipolar or bicubic interpolation would have been more effective.
 
-2. Clipped image
+# 2. Clipped image
+
 The resulting image is unfortunately clipped at the edges.
 Efforts were made to lessen this effect, such as drawing the canvas to a size greater than the calculated diagonal of the image, so that the rotated image produced would fit inside the new boundary.
 
@@ -27,12 +29,12 @@ Please find 3 .js files and 1 .html file in this repository.
 
 # Node Instructions:
 
-data.js contains the Rotator 'class', defined as a function, with the rotate function declared inside.
+data.js contains the Rotator 'class', with the rotate function declared inside.
 The Rotator function is exported for use outside of the file.
 
 The rotate method takes in two parameters, an imageData object and a rotation angle, in radians.
 
-app.js is provided for conveniance as it contains an import of the exported Rotator class.
+app.js is provided for convenience as it contains an import of the exported Rotator class.
 Parameters will have to be provided for the rotate method here.
 
 To run in node, first download and install node on your machine, and navigated to the directory where app.js, data.js and start.js are.
