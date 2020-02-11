@@ -1,0 +1,155 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <style>
+      body {
+        margin: 0px;
+        padding: 0px;
+      }
+    </style>
+  </head>
+  <body data-rsssl=1>
+<canvas id="canvas" width=256 height=256></canvas>
+<script type="module">
+
+var context = canvas.getContext("2d");
+const randI = (min, max = min + (min = 0)) => (Math.random() * (max - min) + min) | 0;
+const doFor = (count, cb) => { var i = 0; while (i < count && cb(i++) !== true); }; 
+
+doFor(150,i=>{
+  context.fillStyle = "hsl("+randI(360)+",100%,50%)";
+  context.fillRect(randI(canvas.width),randI(canvas.height),randI(10,20),randI(10,20));
+});
+context.font = "28px Arial black";
+context.textAlign = "center";
+context.fillStyle = "black";
+context.strokeStyle = "white";
+context.lineWidth = "5";
+context.lineJoin = "round";
+context.strokeText("Rotate",128,128);
+context.fillText("Rotate",128,128);
+
+// get the source pixel data
+var imageData = context.getImageData(0,0,canvas.width,canvas.height);
+
+// rotation angle, in radians
+const radians = 0.523599;
+
+// measure performance speed of rotate function
+performance.mark('starting_rotation');
+
+// call the function to the rotate the image by the specified amount
+var rotateImage = new Rotator();
+var imageDataResult = rotateImage.rotate(imageData,radians);
+
+performance.mark('ending_rotation');
++ performance.measure("rotation_measure", "starting_rotation", "ending_rotation");
+
+// log speed
+const measures = performance.getEntriesByType('measure');
+    measures.forEach(measureItem => {
+      console.log(`${measureItem.name}: ${measureItem.duration}`);
+    });
+
+// create a second canvas
+var c1 = document.createElement("canvas");
+c1.width = canvas.width;
+c1.height = canvas.height;
+var context1 = c1.getContext("2d"); 
+// and put the rotated image on the new canvas
+context1.putImageData(imageDataResult, 0, 0);
+// add the canvas to the page
+document.body.appendChild(c1);
+
+export function Rotator() {
+            
+    this.rotate = function(imageData,radians){
+
+        // general iterators
+        var i, j;
+        
+        // calculated indices in Cartesian coordinates
+        var x, y;
+        var fDistance, fPolarAngle;
+
+        // record image dimensions
+        const iWidth = imageData.width;
+        const iHeight = imageData.height;
+
+        // create a source pixel array
+        var srcImageData = new Uint32Array(imageData.data.buffer);
+        // create a destination pixel array
+        var destImageData = new Uint32Array(imageData.data.length/4);
+        
+        // Rotate the bitmap around the center
+        var iCentreX = iWidth / 2;
+        var iCentreY = iHeight / 2;
+        
+        // Angle to rotate by
+        var cnAngle = radians;
+        
+        // Calculate diagonal with extra buffer space
+        var cnSizeBuffer = 20;
+        var iDiagonal = Math.floor((Math.ceil(Math.sqrt(parseFloat(iWidth * iWidth + iHeight * iHeight))))+cnSizeBuffer);
+    
+        // pre-populate destination
+        for (i = 0; i < iDiagonal; ++i){
+            for (j = 0; j < iDiagonal; ++j){
+                destImageData[j+i*iWidth] = 255;
+            }
+        }
+    
+        // assigning pixels from source image to destination image
+        for (i = 0; i < iDiagonal; ++i){
+            for (j = 0; j < iDiagonal; ++j){
+
+                // convert raster to Cartesian
+                x = j - iCentreX;
+                y = iCentreY - i;
+
+                // convert Cartesian to polar
+                fDistance = Math.sqrt(x * x + y * y);
+                fPolarAngle = 0.0;
+
+            if (x === 0) {
+                if (y === 0) {
+
+                    // centre of image, no rotation needed
+                    destImageData[j+i*iWidth] = srcImageData[j+i*iWidth];
+                    continue;
+                
+                }else if (y < 0){
+                    fPolarAngle = 1.5 * Math.PI;
+                }else{
+                    fPolarAngle = 0.5 * Math.PI;
+                }
+            }else{
+                fPolarAngle = Math.atan2(parseFloat(y),parseFloat(x));
+            }
+
+            // Add the rotation
+            fPolarAngle += cnAngle;
+
+            // convert polar to Cartesian
+            x = Math.floor((Math.round(fDistance * Math.cos(fPolarAngle))));
+            y = Math.floor((Math.round(fDistance * Math.sin(fPolarAngle))));
+
+            // convert Cartesian to raster
+            x = x + iCentreX;
+            y = iCentreY - y;
+
+            // check bounds
+            if (x < 0 || x >= iWidth || y < 0 || y >= iHeight) continue;
+
+            destImageData[j + i * iWidth] = srcImageData[x + y * iWidth];
+            }
+        }
+
+    srcImageData.set(destImageData);
+    return imageData;
+    }
+};
+
+</script>
+</body>
+</html>   
