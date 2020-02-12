@@ -16,7 +16,7 @@ Future improvements which I would have liked to have made to the program are lis
 
 # 1. Improve image quality
 
-I applied linear interpolation to calculate the image rotation, however for smoother image quality I believe that bipolar or bicubic interpolation would have been more effective.
+I applied linear interpolation to calculate the image rotation, however for smoother image quality I believe that bilinear or bicubic interpolation would have been more effective.
 
 # 2. Clipped image
 
