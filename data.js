@@ -31,9 +31,6 @@ export function Rotator() {
         var iCentreX = iWidth / 2;
         var iCentreY = iHeight / 2;
         
-        // Angle to rotate by
-        var cnAngle = radians;
-        
         // Calculate diagonal with extra buffer space
         var cnSizeBuffer = 20;
         var iDiagonal = Math.floor((Math.ceil(Math.sqrt(parseFloat(iWidth * iWidth + iHeight * iHeight))))+cnSizeBuffer);
@@ -74,7 +71,7 @@ export function Rotator() {
                 }
 
                 // Add the rotation
-                fPolarAngle += cnAngle;
+                fPolarAngle += radians;
 
                 // convert polar to Cartesian
                 x = Math.floor((Math.round(fDistance * Math.cos(fPolarAngle))));
