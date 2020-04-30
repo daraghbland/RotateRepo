@@ -14,15 +14,23 @@ Linear interpolation was used to calculate the new rotation points.
 
 Please find 3 .js files and 1 .html file in this repository.
 
-# Browser Instructions:
-
 data.js contains the Rotator 'class', with the rotate function declared inside.
 The Rotator function is exported for use outside of the file.
 
 The rotate method takes in two parameters, an imageData object and a rotation angle, in radians.
 
+# Browser Instructions:
 
 Rotation.html, when opened in Chrome, Firefox or Microsoft Edge, displays two images with the image on the right the rotated version.
 The Rotator function is exported in this file also.
 
 The angle of rotation is specified in the script tags of the html page, and an image is drawn on the canvas as the source image.
+
+# Custom Angle:
+
+You can specify an angle of rotation by doing the following:
+
+Open rotation.html and change the following line to specify how many radians you want to rotate the image by:
+
+// rotation angle, in radians
+const radians = 0.52;
