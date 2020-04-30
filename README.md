@@ -32,5 +32,4 @@ You can specify an angle of rotation by doing the following:
 
 Open rotation.html and change the following line to specify how many radians you want to rotate the image by:
 
-// rotation angle, in radians
 const radians = 0.52;
